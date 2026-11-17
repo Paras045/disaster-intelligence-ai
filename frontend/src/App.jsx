@@ -28,16 +28,6 @@ import {
 import StationMap from './StationMap'
 import './App.css'
 
-const rainfallData = [
-  { day: 'Mon', rainfall: 12 },
-  { day: 'Tue', rainfall: 28 },
-  { day: 'Wed', rainfall: 18 },
-  { day: 'Thu', rainfall: 45 },
-  { day: 'Fri', rainfall: 32 },
-  { day: 'Sat', rainfall: 68 },
-  { day: 'Sun', rainfall: 52 },
-]
-
 const alerts = [
   {
     location: 'Sangli',
@@ -69,8 +59,8 @@ const stats = [
   },
   {
     title: 'Rainfall Monitoring',
-    value: '68 mm',
-    detail: 'Demo weekly rainfall',
+    value: 'Loading...',
+    detail: 'Historical rainfall dataset',
     icon: CloudRain,
     color: 'cyan',
   },
@@ -122,7 +112,6 @@ function Sidebar() {
             <button
               key={item.name}
               className={`nav-item ${item.active ? 'active' : ''}`}
-              key={item.name}
             >
               <Icon size={19} />
               <span>{item.name}</span>
@@ -163,28 +152,60 @@ function StatCard({ item }) {
 function App() {
   const [summary, setSummary] = useState(null)
   const [recentDischarge, setRecentDischarge] = useState([])
+  const [rainfallSummary, setRainfallSummary] = useState(null)
+  const [monthlyRainfall, setMonthlyRainfall] = useState([])
+  const [dailyRainfall, setDailyRainfall] = useState([])
   const [apiError, setApiError] = useState('')
 
   useEffect(() => {
+    const controller = new AbortController()
+
     async function fetchDashboardData() {
       try {
-        const [summaryResponse, dischargeResponse] = await Promise.all([
-          fetch('http://127.0.0.1:8000/api/summary'),
-          fetch('http://127.0.0.1:8000/api/discharge/recent?limit=5'),
-        ])
+        const endpoints = [
+          'http://127.0.0.1:8000/api/summary',
+          'http://127.0.0.1:8000/api/discharge/recent?limit=5',
+          'http://127.0.0.1:8000/api/rainfall/summary',
+          'http://127.0.0.1:8000/api/rainfall/monthly',
+          'http://127.0.0.1:8000/api/rainfall/daily',
+        ]
 
-        if (!summaryResponse.ok || !dischargeResponse.ok) {
-          throw new Error('Could not load API data')
+        const responses = await Promise.all(
+          endpoints.map((url) =>
+            fetch(url, { signal: controller.signal }),
+          ),
+        )
+
+        if (responses.some((response) => !response.ok)) {
+          throw new Error('Could not load dashboard API data')
         }
 
-        setSummary(await summaryResponse.json())
-        setRecentDischarge(await dischargeResponse.json())
+        const [
+          riverSummary,
+          discharge,
+          rainSummary,
+          monthly,
+          daily,
+        ] = await Promise.all(
+          responses.map((response) => response.json()),
+        )
+
+        setSummary(riverSummary)
+        setRecentDischarge(discharge)
+        setRainfallSummary(rainSummary)
+        setMonthlyRainfall(monthly)
+        setDailyRainfall(daily)
+        setApiError('')
       } catch (error) {
-        setApiError(error.message)
+        if (error.name !== 'AbortError') {
+          setApiError(error.message)
+        }
       }
     }
 
     fetchDashboardData()
+
+    return () => controller.abort()
   }, [])
 
   return (
@@ -204,7 +225,7 @@ function App() {
           </div>
 
           <div className="topbar-right">
-            <span className="demo-badge">DEMO DATA</span>
+            <span className="demo-badge">HISTORICAL DATA</span>
             <button className="notification-button">
               <Bell size={19} />
               <span />
@@ -231,16 +252,22 @@ function App() {
           <div className="demo-notice">
             <AlertTriangle size={18} />
             <p>
-              <strong>Demonstration mode:</strong> Values and alerts shown here
-              are sample data. They are not live measurements or verified
-              disaster predictions.
+              <strong>Data transparency:</strong> Rainfall and river values are
+              historical observations. Alerts are simulated for demonstration
+              and are not verified disaster warnings or AI predictions.
             </p>
           </div>
 
           <div className="api-status">
-            <span className={summary ? 'api-dot online' : 'api-dot offline'} />
-            {summary
-              ? 'Connected to historical river dataset'
+            <span
+              className={
+                summary && rainfallSummary
+                  ? 'api-dot online'
+                  : 'api-dot offline'
+              }
+            />
+            {summary && rainfallSummary
+              ? 'Connected to historical river and rainfall datasets'
               : apiError || 'Connecting to Python API...'}
           </div>
 
@@ -248,7 +275,9 @@ function App() {
             {stats.map((item) => {
               const actualValues = {
                 'Monitoring Stations': summary?.total_stations,
-                'Rainfall Monitoring': null,
+                'Rainfall Monitoring': rainfallSummary
+                  ? `${rainfallSummary.average_rainfall_mm.toFixed(2)} mm`
+                  : 'Loading...',
                 'River Discharge':
                   summary?.total_records?.toLocaleString('en-IN'),
                 'Active Alerts': null,
@@ -265,6 +294,8 @@ function App() {
                     detail:
                       item.title === 'Monitoring Stations'
                         ? 'Actual historical stations'
+                        : item.title === 'Rainfall Monitoring'
+                          ? 'Mean grid-cell rainfall · 2024'
                         : item.title === 'River Discharge'
                           ? 'Historical discharge records'
                           : item.detail,
@@ -279,7 +310,7 @@ function App() {
               <div className="panel-heading">
                 <div>
                   <h3>Rainfall Overview</h3>
-                  <p>Sample weekly rainfall · millimetres</p>
+                  <p>Monthly average daily rainfall · mm · 2024</p>
                 </div>
                 <div className="panel-icon blue">
                   <CloudRain size={20} />
@@ -287,34 +318,100 @@ function App() {
               </div>
 
               <div className="chart-container">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={rainfallData}>
-                    <defs>
-                      <linearGradient
-                        id="rainGradient"
-                        x1="0"
-                        y1="0"
-                        x2="0"
-                        y2="1"
-                      >
-                        <stop offset="0%" stopColor="#3182ce" stopOpacity={0.25} />
-                        <stop offset="100%" stopColor="#3182ce" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e9eef5" />
-                    <XAxis dataKey="day" axisLine={false} tickLine={false} />
-                    <YAxis axisLine={false} tickLine={false} />
-                    <Tooltip />
-                    <Area
-                      type="monotone"
-                      dataKey="rainfall"
-                      stroke="#3182ce"
-                      strokeWidth={3}
-                      fill="url(#rainGradient)"
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
+                {monthlyRainfall.length > 0 ? (
+                  <ResponsiveContainer width="100%" height="100%">
+                    <AreaChart data={monthlyRainfall}>
+                      <defs>
+                        <linearGradient
+                          id="rainGradient"
+                          x1="0"
+                          y1="0"
+                          x2="0"
+                          y2="1"
+                        >
+                          <stop
+                            offset="0%"
+                            stopColor="#3182ce"
+                            stopOpacity={0.25}
+                          />
+                          <stop
+                            offset="100%"
+                            stopColor="#3182ce"
+                            stopOpacity={0}
+                          />
+                        </linearGradient>
+                      </defs>
+
+                      <CartesianGrid
+                        strokeDasharray="3 3"
+                        vertical={false}
+                        stroke="#e9eef5"
+                      />
+
+                      <XAxis
+                        dataKey="month"
+                        tickFormatter={(value) =>
+                          new Date(`${value}-01T00:00:00`).toLocaleDateString(
+                            'en-IN',
+                            { month: 'short' },
+                          )
+                        }
+                        axisLine={false}
+                        tickLine={false}
+                      />
+
+                      <YAxis
+                        axisLine={false}
+                        tickLine={false}
+                        tickFormatter={(value) => `${value} mm`}
+                      />
+
+                      <Tooltip
+                        formatter={(value) => [
+                          `${Number(value).toFixed(2)} mm`,
+                          'Average daily rainfall',
+                        ]}
+                        labelFormatter={(value) =>
+                          new Date(`${value}-01T00:00:00`).toLocaleDateString(
+                            'en-IN',
+                            { month: 'long', year: 'numeric' },
+                          )
+                        }
+                      />
+
+                      <Area
+                        type="monotone"
+                        dataKey="average_daily_rainfall_mm"
+                        stroke="#3182ce"
+                        strokeWidth={3}
+                        fill="url(#rainGradient)"
+                      />
+                    </AreaChart>
+                  </ResponsiveContainer>
+                ) : (
+                  <p className="data-source-note">
+                    {apiError || 'Loading historical rainfall data...'}
+                  </p>
+                )}
               </div>
+              <p className="data-source-note">
+                Source: IMD RFone rainfall dataset · 2024. Preliminary
+                rectangular Maharashtra-region selection.
+              </p>
+              {dailyRainfall.length > 0 && (
+                <div className="observation-dates">
+                  <span>
+                    Highest daily grid-cell rainfall:{' '}
+                    {Math.max(
+                      ...dailyRainfall.map(
+                        (item) => item.maximum_rainfall_mm ?? 0,
+                      ),
+                    ).toFixed(2)}{' '}
+                    mm
+                  </span>
+                  <span>{dailyRainfall.length} daily observations</span>
+                </div>
+              )}
             </div>
 
             <div className="panel chart-panel">
