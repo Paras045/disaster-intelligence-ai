@@ -628,3 +628,264 @@
 .api-dot.offline {
   background: #f59e0b;
 }
+
+.page-data-label,
+.simulated-label,
+.service-label {
+  border: 1px solid #e7edf4;
+  border-radius: 7px;
+  color: #54728f;
+  background: #fff;
+  padding: 9px 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+}
+
+.simulated-label {
+  color: #a45b10;
+  border-color: #f5e4bd;
+  background: #fff9eb;
+}
+
+.service-label.connected {
+  color: #16794a;
+  border-color: #ccebd9;
+  background: #f0fbf4;
+}
+
+.analysis-metrics {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.analysis-metric {
+  min-width: 0;
+}
+
+.analysis-metric h2 {
+  overflow-wrap: anywhere;
+}
+
+.compact-metric {
+  font-size: 20px !important;
+}
+
+.analysis-chart-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  margin-bottom: 19px;
+}
+
+.chart-empty {
+  min-height: 180px;
+  display: grid;
+  place-items: center;
+  color: #8290a2;
+  font-size: 12px;
+  text-align: center;
+}
+
+.error-text {
+  color: #c24141;
+}
+
+.dataset-information {
+  margin-bottom: 18px;
+}
+
+.dataset-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 24px;
+  margin: 14px 0 0;
+}
+
+.dataset-details > div,
+.selected-station-details > div {
+  min-width: 0;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.dataset-details dt,
+.selected-station-details dt {
+  color: #8290a3;
+  font-size: 10px;
+  margin-bottom: 5px;
+}
+
+.dataset-details dd,
+.selected-station-details dd {
+  color: #26374d;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.river-monitoring-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.08fr) minmax(0, 0.92fr);
+  align-items: start;
+  gap: 18px;
+}
+
+.station-explorer-panel,
+.river-history-column {
+  min-width: 0;
+}
+
+.station-explorer-panel > .panel-heading {
+  margin-bottom: 12px;
+}
+
+.river-history-column {
+  display: grid;
+  gap: 18px;
+}
+
+.selected-station-details {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 18px;
+  margin: 8px 0 0;
+}
+
+.recent-records {
+  margin-top: 12px;
+}
+
+.recent-record {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.recent-record:last-child {
+  border-bottom: 0;
+}
+
+.recent-record > div,
+.recent-record-value {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+.recent-record strong {
+  color: #26374d;
+  font-size: 11px;
+}
+
+.recent-record span {
+  color: #8794a6;
+  font-size: 9px;
+}
+
+.recent-record-value {
+  text-align: right;
+}
+
+.risk-map-panel {
+  min-height: 450px;
+}
+
+.alerts-page-panel,
+.settings-panel {
+  max-width: 1000px;
+}
+
+.settings-list {
+  margin: 0;
+}
+
+.settings-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 0.35fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 15px 0;
+  border-bottom: 1px solid #eef1f5;
+}
+
+.settings-row:last-child {
+  border-bottom: 0;
+}
+
+.settings-row dt {
+  color: #8290a3;
+  font-size: 11px;
+}
+
+.settings-row dd {
+  color: #26374d;
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.sidebar-backdrop {
+  display: none;
+}
+
+@media (max-width: 1100px) {
+  .analysis-metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 760px) {
+  .sidebar {
+    display: flex;
+    position: fixed;
+    inset: 0 auto 0 0;
+    height: 100vh;
+    overflow-y: auto;
+    z-index: 31;
+    transform: translateX(-100%);
+    transition: transform 180ms ease;
+  }
+
+  .sidebar.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 30;
+    border: 0;
+    background: rgb(15 23 42 / 45%);
+  }
+
+  .analysis-chart-grid,
+  .river-monitoring-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .river-history-column {
+    grid-row: 1;
+  }
+}
+
+@media (max-width: 520px) {
+  .dataset-details,
+  .selected-station-details {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-row {
+    grid-template-columns: 1fr;
+    gap: 6px;
+  }
+
+  .page-data-label,
+  .simulated-label,
+  .service-label {
+    white-space: normal;
+  }
+}

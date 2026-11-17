@@ -40,7 +40,7 @@ function formatDate(value) {
   })
 }
 
-function StationMap() {
+function StationMap({ onStationSelect }) {
   const [stations, setStations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
@@ -61,6 +61,7 @@ function StationMap() {
 
         const data = await response.json()
         setStations(data)
+        onStationSelect?.(data[0] ?? null)
       } catch (err) {
         setError(err.message)
       } finally {
@@ -69,7 +70,7 @@ function StationMap() {
     }
 
     fetchStations()
-  }, [])
+  }, [onStationSelect])
 
   const validStations = useMemo(
     () =>
@@ -249,7 +250,10 @@ function StationMap() {
             className={`station-list-item ${
               selectedStation === station ? 'selected' : ''
             }`}
-            onClick={() => setSelectedStation(station)}
+            onClick={() => {
+              setSelectedStation(station)
+              onStationSelect?.(station)
+            }}
           >
             <div className="station-list-main">
               <strong>{station.station || 'Unnamed station'}</strong>
